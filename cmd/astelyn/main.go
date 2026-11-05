@@ -192,7 +192,7 @@ func runDarling(args []string) int {
 		fmt.Fprintln(os.Stderr, "Astelyn:", err)
 		return 1
 	}
-	rest := flags.Args()[1:]
+	rest := guestArguments(flags.Args()[1:])
 	fmt.Printf("Darling command: %s shell %s", exe, guestPath)
 	for _, arg := range rest {
 		fmt.Printf(" %q", arg)
