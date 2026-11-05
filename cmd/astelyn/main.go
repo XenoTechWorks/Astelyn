@@ -7,11 +7,15 @@ import (
 	"os"
 	"strings"
 
+	"github.com/XenoTechWorks/Astelyn/internal/graphics"
 	"github.com/XenoTechWorks/Astelyn/internal/inspection"
 )
 
 func main() { os.Exit(run(os.Args[1:])) }
 func run(args []string) int {
+	if len(args) > 0 && args[0] == "graphics" {
+		return runGraphics(args[1:])
+	}
 	if len(args) < 1 || (args[0] != "inspect" && args[0] != "deps") {
 		fmt.Fprintln(os.Stderr, "Usage: astelyn <inspect|deps> [--json] <RobloxPlayer.zip>")
 		return 2
@@ -63,4 +67,59 @@ func run(args []string) int {
 	}
 	fmt.Println("\nStatic inspection only. Astelyn cannot launch Roblox yet.")
 	return 0
+}
+
+func runGraphics(args []string) int {
+	usage := func() { fmt.Fprintln(os.Stderr, "Usage: astelyn graphics <list|get|set> [auto|vulkan|opengl]") }
+	if len(args) < 1 {
+		usage()
+		return 2
+	}
+	switch args[0] {
+	case "list":
+		if len(args) != 1 {
+			usage()
+			return 2
+		}
+		for _, b := range []graphics.Backend{graphics.Vulkan, graphics.OpenGL} {
+			d := graphics.Probe(b)
+			status := "unavailable"
+			if d.Available {
+				status = "available"
+			}
+			fmt.Printf("%s: %s (%s)\n", d.Backend, status, d.Details)
+		}
+		fmt.Println("Host diagnostics only; Astelyn does not yet switch Roblox rendering APIs.")
+		return 0
+	case "get", "set":
+		if (args[0] == "get" && len(args) != 1) || (args[0] == "set" && len(args) != 2) {
+			usage()
+			return 2
+		}
+		path, err := graphics.ConfigPath()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Astelyn:", err)
+			return 1
+		}
+		if args[0] == "get" {
+			s, err := graphics.Load(path)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Astelyn:", err)
+				return 1
+			}
+			fmt.Println(s.Backend)
+			return 0
+		}
+		b := graphics.Backend(args[1])
+		if err := graphics.Save(path, b); err != nil {
+			fmt.Fprintln(os.Stderr, "Astelyn:", err)
+			return 1
+		}
+		fmt.Printf("Saved graphics preference: %s\n", b)
+		fmt.Println("Preference only; not connected to a macOS renderer yet.")
+		return 0
+	default:
+		usage()
+		return 2
+	}
 }
