@@ -14,6 +14,9 @@ import (
 
 func main() { os.Exit(run(os.Args[1:])) }
 func run(args []string) int {
+	if len(args) > 0 && args[0] == "frameworks" {
+		return runFrameworks(args[1:])
+	}
 	if len(args) > 0 && args[0] == "probe" {
 		return runProbe(args[1:])
 	}
@@ -24,6 +27,9 @@ func run(args []string) int {
 		return runDarling(args[1:])
 	}
 	if len(args) > 0 && args[0] == "graphics" {
+		if len(args) > 1 && (args[1] == "overlay" || args[1] == "performance" || args[1] == "gpus" || args[1] == "native-run") {
+			return runGraphicsExtra(args[1:])
+		}
 		return runGraphics(args[1:])
 	}
 	if len(args) < 1 || (args[0] != "inspect" && args[0] != "deps") {
