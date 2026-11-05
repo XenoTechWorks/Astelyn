@@ -7,17 +7,21 @@ import (
 	"os"
 	"strings"
 
+	"github.com/XenoTechWorks/Astelyn/internal/darling"
 	"github.com/XenoTechWorks/Astelyn/internal/graphics"
 	"github.com/XenoTechWorks/Astelyn/internal/inspection"
 )
 
 func main() { os.Exit(run(os.Args[1:])) }
 func run(args []string) int {
+	if len(args) > 0 && args[0] == "darling" {
+		return runDarling(args[1:])
+	}
 	if len(args) > 0 && args[0] == "graphics" {
 		return runGraphics(args[1:])
 	}
 	if len(args) < 1 || (args[0] != "inspect" && args[0] != "deps") {
-		fmt.Fprintln(os.Stderr, "Usage: astelyn <inspect|deps> [--json] <RobloxPlayer.zip>")
+		fmt.Fprintln(os.Stderr, "Usage: astelyn <inspect|deps|graphics|darling> [--json] <RobloxPlayer.zip>")
 		return 2
 	}
 	mode := args[0]
@@ -122,4 +126,82 @@ func runGraphics(args []string) int {
 		usage()
 		return 2
 	}
+}
+
+// runDarling distinguishes Linux host paths from Darling guest paths.
+func runDarling(args []string) int {
+	usage := func() {
+		fmt.Fprintln(os.Stderr, "Usage: astelyn darling <status|test|run> [--execute] [--guest] <path> [-- args...]")
+	}
+	if len(args) == 1 && args[0] == "status" {
+		executable, err := darling.Find()
+		if err != nil {
+			fmt.Println("Darling: not found on PATH")
+			return 1
+		}
+		fmt.Println("Darling:", executable)
+		fmt.Println("Detected only; use 'darling test' to check command execution.")
+		return 0
+	}
+	if len(args) == 1 && args[0] == "test" {
+		exe, err := darling.Find()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Astelyn:", err)
+			return 1
+		}
+		if err := darling.SmokeTest(exe, darling.SystemRoot); err != nil {
+			fmt.Fprintln(os.Stderr, "Astelyn:", err)
+			return 1
+		}
+		fmt.Println("Darling smoke test passed: macOS-compatible Bash executed and returned the expected output.")
+		return 0
+	}
+	if len(args) < 2 || args[0] != "run" {
+		usage()
+		return 2
+	}
+	flags := flag.NewFlagSet("darling run", flag.ContinueOnError)
+	flags.SetOutput(os.Stderr)
+	execute := flags.Bool("execute", false, "attempt guest execution (dry run by default)")
+	guestFlag := flags.Bool("guest", false, "interpret executable path inside Darling")
+	if err := flags.Parse(args[1:]); err != nil {
+		return 2
+	}
+	if flags.NArg() < 1 {
+		usage()
+		return 2
+	}
+	path := flags.Arg(0)
+	var guestPath string
+	var err error
+	if *guestFlag {
+		guestPath = path
+		err = darling.ValidateGuest(guestPath, darling.SystemRoot)
+	} else {
+		guestPath, err = darling.ResolveGuest(path, darling.SystemRoot)
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Astelyn:", err)
+		return 1
+	}
+	exe, err := darling.Find()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Astelyn:", err)
+		return 1
+	}
+	rest := flags.Args()[1:]
+	fmt.Printf("Darling command: %s shell %s", exe, guestPath)
+	for _, arg := range rest {
+		fmt.Printf(" %q", arg)
+	}
+	fmt.Println()
+	if !*execute {
+		fmt.Println("Dry run. Add --execute to run this command.")
+		return 0
+	}
+	if err := darling.Execute(exe, guestPath, rest...); err != nil {
+		fmt.Fprintln(os.Stderr, "Astelyn:", err)
+		return 1
+	}
+	return 0
 }
