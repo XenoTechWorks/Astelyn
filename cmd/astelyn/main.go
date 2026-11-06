@@ -14,6 +14,9 @@ import (
 
 func main() { os.Exit(run(os.Args[1:])) }
 func run(args []string) int {
+	if len(args) > 0 && args[0] == "gui-check" {
+		return runGUICheck(args[1:])
+	}
 	if len(args) > 0 && args[0] == "objc-probe" {
 		return runObjCProbe(args[1:])
 	}
