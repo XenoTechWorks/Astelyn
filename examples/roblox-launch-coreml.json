@@ -1,0 +1,9 @@
+{
+  "host_executable": "/home/animated/Games/Astelyn/RobloxPlayer.app/Contents/MacOS/RobloxPlayer",
+  "guest_executable": "/Volumes/SystemRoot/home/animated/Games/Astelyn/RobloxPlayer.app/Contents/MacOS/RobloxPlayer",
+  "exit_code": 1,
+  "timed_out": false,
+  "stdout": "abort_with_payload: reason: dyld: No shared cache present\nLibrary not loaded: /System/Library/Frameworks/CoreML.framework/Versions/A/CoreML\n  Referenced from: /Volumes/SystemRoot/home/animated/Games/Astelyn/RobloxPlayer.app/Contents/MacOS/RobloxPlayer\n  Reason: image not found; code: 1\n",
+  "stderr": "/etc/profile: line 5: cp: command not found\ndyld: Library not loaded: /System/Library/Frameworks/CoreML.framework/Versions/A/CoreML\n  Referenced from: /Volumes/SystemRoot/home/animated/Games/Astelyn/RobloxPlayer.app/Contents/MacOS/RobloxPlayer\n  Reason: image not found\n",
+  "note": "Sanitized example of real v0.3.0 launch output."
+}

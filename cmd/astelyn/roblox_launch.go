@@ -17,6 +17,8 @@ func runRobloxTest(args []string) int {
 		return 2
 	}
 	switch args[0] {
+	case "analyze":
+		return runRobloxAnalyze(args[1:])
 	case "plan":
 		flags := flag.NewFlagSet("roblox-test plan", flag.ContinueOnError)
 		jsonOut := flags.Bool("json", false, "JSON report")
